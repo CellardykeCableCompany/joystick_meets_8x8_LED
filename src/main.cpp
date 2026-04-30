@@ -1,8 +1,13 @@
 /*
 jon rogers
 26.04.2026
+
+BASICS OF INTERACTIONS - the joystick.
+In this tutorial you will learn how to read a two axis voltage divider joystick and calibrate it 
+for use in arduino development. 
+
+
 	voltage-divider  two-axis joystick - basics
-  
   calibrate to find limits then use as you like
 
 Using Arduino Nano BLE Sense 33
@@ -37,20 +42,21 @@ https://docs.arduino.cc/resources/pinouts/ABX00031-full-pinout.pdf?_gl=1*1rdm73z
 
 
 #include <Arduino.h>
+#include <Adafruit_GFX.h>
+#include "Adafruit_LEDBackpack.h"
 
-#define CALIB
+//#define CALIB
 
-#define MIN_JX 397
+#define MIN_JX 340 // calibrated joystick values
 #define MAX_JX 1023
-#define MIN_JY 347
+#define MIN_JY 340
 #define MAX_JY 1023
-
+#define MAX_MX 8
+#define  MAX_MY 8
 
 int ADC1 = A0; 
 int ADC2 = A1; 
 int S1 = A2; 
-
-
 
 int vertical = 512;  // variable to store the value read
 int horizontal = 512; 
@@ -60,10 +66,20 @@ int switch1= 0;
 int joystickLimits[4] = {512, 512, 512, 512};
 
 void calibrate(int (&calib) [4]); 
+void follow_joystick(int , int);
+
+/* 8x8 Matrix */
+
+Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
+
+
 
 void setup() {
   Serial.begin(9600);           //  setup serial
   pinMode(S1, INPUT_PULLUP); 
+
+  matrix.begin(0x70);  // pass in the address 0x70 for led backpack... 
+
 
 
 }
@@ -78,12 +94,21 @@ void loop() {
    delay(100);
 #else
 
- Serial.println("the joy begins... good luck!  ");
- #endif
+ //Serial.println("the joy begins... good luck!  ");
+  int joyX; 
+  int joyY; 
+  joyX = analogRead(ADC1);
+  joyY = analogRead(ADC2);
+  //Serial.print("jx = "); Serial.print(jx);
+  //Serial.println(); 
 
+  follow_joystick(joyX, joyY);
+  delay (100);
+ #endif
 
 }
 
+/*   joystick    */
 void calibrate(int (&calib) [4])
 {
 
@@ -104,6 +129,28 @@ void calibrate(int (&calib) [4])
     calib[2] = vertical; 
   if (vertical > calib[3])
     calib[3] = vertical; 
+
+}
+
+/* Matrix */
+
+void follow_joystick(int jx, int jy)
+{
+   int x=0; 
+   int y=0; 
+  //Serial.println("in");
+   x = map (jx, MIN_JX, MAX_JX, 0,  MAX_MX-1);
+   y = map (jy, MIN_JY, MAX_JY, 0 , MAX_MY-1);
+Serial.print(x); Serial.print(" "); Serial.print (y);
+Serial.println(); 
+
+  // draw 
+  
+  matrix.clear();
+  matrix.drawPixel(x, y, LED_ON);
+  matrix.writeDisplay();
+  
+  
 
 }
 
