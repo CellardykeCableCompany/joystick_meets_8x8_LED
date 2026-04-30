@@ -46,6 +46,7 @@ https://docs.arduino.cc/resources/pinouts/ABX00031-full-pinout.pdf?_gl=1*1rdm73z
 #include "Adafruit_LEDBackpack.h"
 
 //#define CALIB
+#define DEBUG
 
 #define MIN_JX 340 // calibrated joystick values
 #define MAX_JX 1023
@@ -66,22 +67,21 @@ int switch1= 0;
 int joystickLimits[4] = {512, 512, 512, 512};
 
 void calibrate(int (&calib) [4]); 
-void follow_joystick(int , int);
+void followJoystick(int , int);
+void joystickDraw(int , int, int);
+void joystickBlink(int , int);
+void writeGrid ();
 
 /* 8x8 Matrix */
 
 Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
-
-
+int led_grid[MAX_MX][MAX_MY] = {0}; // initialise grid with zero ( 0 = off; 1 = on) 
 
 void setup() {
   Serial.begin(9600);           //  setup serial
   pinMode(S1, INPUT_PULLUP); 
 
   matrix.begin(0x70);  // pass in the address 0x70 for led backpack... 
-
-
-
 }
 
 void loop() {
@@ -97,13 +97,24 @@ void loop() {
  //Serial.println("the joy begins... good luck!  ");
   int joyX; 
   int joyY; 
+  int v; 
   joyX = analogRead(ADC1);
   joyY = analogRead(ADC2);
+  switch1=digitalRead(S1);
+  // reverse switch value
+  if (switch1==0) 
+    v=1; 
+  else
+    v=0; 
+  
   //Serial.print("jx = "); Serial.print(jx);
   //Serial.println(); 
 
-  follow_joystick(joyX, joyY);
-  delay (100);
+ // followJoystick(joyX, joyY);
+  joystickDraw(joyX, joyY, v);
+  matrix.writeDisplay();
+  
+  
  #endif
 
 }
@@ -134,7 +145,7 @@ void calibrate(int (&calib) [4])
 
 /* Matrix */
 
-void follow_joystick(int jx, int jy)
+void followJoystick(int jx, int jy)
 {
    int x=0; 
    int y=0; 
@@ -150,7 +161,80 @@ Serial.println();
   matrix.drawPixel(x, y, LED_ON);
   matrix.writeDisplay();
   
-  
 
 }
 
+void joystickBlink(int jx, int jy) 
+{
+  int s; // switch
+ 
+  // map joystick to draw
+  int x=0; 
+   int y=0; 
+  //Serial.println("in");
+   x = map (jx, MIN_JX, MAX_JX, 0,  MAX_MX-1);
+   y = map (jy, MIN_JY, MAX_JY, 0 , MAX_MY-1);
+  
+   #ifdef DEBUG
+   Serial.print(x); Serial.print(" "); Serial.print (y); Serial.println(); 
+   #endif
+
+   // fill grid
+   
+    if (led_grid[x][y]==1)
+      led_grid[x][y]=0;  
+    else  
+    led_grid[x][y=0]==1; 
+   writeGrid(); 
+}
+
+
+void joystickDraw(int jx, int jy, int val) 
+{
+  
+ 
+  // map joystick to draw
+  int x=0; 
+   int y=0; 
+  //Serial.println("in");
+   x = map (jx, MIN_JX, MAX_JX, 0,  MAX_MX-1);
+   y = map (jy, MIN_JY, MAX_JY, 0 , MAX_MY-1);
+  
+   #ifdef DEBUG
+   Serial.print(x); Serial.print(" "); Serial.print (y); Serial.println(); 
+   #endif
+
+   led_grid[x][y]=val; 
+   /*
+   // reverse value at grid 
+    if (led_grid[x][y]==0)
+      led_grid[x][y]=1;
+    else  
+      led_grid[x][y]=0; 
+    */ 
+
+   writeGrid(); 
+
+
+}
+
+void writeGrid ()
+{
+ // write contents of the grid to the LED matrix
+
+  matrix.clear();
+  
+  
+
+  for (int y=0; y<MAX_MY; y++){
+    for (int x=0; x<MAX_MX; x++){
+      if (led_grid[x][y]==1)
+        matrix.drawPixel(x, y, LED_ON);
+      else 
+       matrix.drawPixel(x, y, LED_OFF);  
+	}
+  }
+  //matrix.writePixel(7,0, LED_ON);
+
+
+}
