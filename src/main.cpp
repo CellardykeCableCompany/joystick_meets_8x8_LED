@@ -2,7 +2,6 @@
 jon rogers
 05.05.2026
 
-
 BASICS OF INTERACTIONS - the joystick drawing machine
 In this tutorial you will learn how to read a two axis voltage divider joystick to control an 8x8 LED matrix
 
@@ -71,6 +70,7 @@ int ty=512;
 int joystickLimits[4] = {512, 512, 512, 512};
 
 void calibrate(int (&calib) [4]); 
+void joystickRead (int &, int &);
 void followJoystick(int , int);
 void joystickDraw(int , int, int);
 void joystickBlink(int , int);
@@ -81,6 +81,8 @@ void writeGrid ();
 Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
 int led_grid[MAX_MX][MAX_MY] = {0}; // initialise grid with zero ( 0 = off; 1 = on) 
 
+int mx, my; 
+
 
 /*  timer functionality*/
 const unsigned long blinkInterval = 500; // set blink in milliseconds 
@@ -89,7 +91,6 @@ unsigned long previousTime = 0;
 void setup() {
   Serial.begin(9600);           //  setup serial
   pinMode(S1, INPUT_PULLUP); 
-
   matrix.begin(0x70);  // pass in the address 0x70 for led backpack... 
   
   
@@ -107,11 +108,10 @@ unsigned long currentTime = millis();
 #else
 
  //Serial.println("the joy begins... good luck!  ");
-  int joyX; 
-  int joyY; 
+  int mX; 
+  int mY; 
   int v; 
-  joyX = analogRead(ADC1);
-  joyY = analogRead(ADC2);
+  
   switch1=digitalRead(S1);
   // reverse switch value
   if (switch1==0) 
@@ -119,11 +119,8 @@ unsigned long currentTime = millis();
   else
     v=0; 
   
-  //Serial.print("jx = "); Serial.print(jx);
-  //Serial.println(); 
-
- // followJoystick(joyX, joyY);
-  joystickDraw(joyX, joyY, v);
+  joystickRead(mX, mY);
+  joystickDraw(mX, mY,  v);
   // add blink state through timer
   
   if (currentTime - previousTime >= blinkInterval) {
@@ -135,7 +132,7 @@ unsigned long currentTime = millis();
   }
  
    if (is_blink){
-    joystickBlink(joyX, joyY);
+    joystickBlink(mX, mY);
     }
    matrix.writeDisplay();
  #endif
@@ -165,44 +162,30 @@ void calibrate(int (&calib) [4])
     calib[3] = vertical; 
 
 }
+void joystickRead(int &x, int &y)
+{
+  int  a1= analogRead(ADC1);
+  int  a2 = analogRead(ADC2);
+
+  x = map (a1, MIN_JX, MAX_JX, 0,  MAX_MX-1);
+  y = map (a2, MIN_JY, MAX_JY, 0 , MAX_MY-1);
+
+}
 
 /* Matrix */
 
-void followJoystick(int jx, int jy)
+void followJoystick(int x, int y)
 {
-   int x=0; 
-   int y=0; 
-  //Serial.println("in");
-   x = map (jx, MIN_JX, MAX_JX, 0,  MAX_MX-1);
-   y = map (jy, MIN_JY, MAX_JY, 0 , MAX_MY-1);
-Serial.print(x); Serial.print(" "); Serial.print (y);
-Serial.println(); 
-
   // draw 
-  
   matrix.drawPixel(x, y, LED_ON);
   matrix.clear();
   matrix.writeDisplay();
   
-
 }
 
-void joystickBlink(int jx, int jy) 
+void joystickBlink(int x, int y) 
 {
-  //int s; // switch
- 
-  // map joystick to draw
-  int x=0; 
-  int y=0; 
-  //Serial.println("in");
-   x = map (jx, MIN_JX, MAX_JX, 0,  MAX_MX-1);
-   y = map (jy, MIN_JY, MAX_JY, 0 , MAX_MY-1);
   
-   #ifdef DEBUG
-   Serial.print(x); Serial.print(" "); Serial.print (y); Serial.println(); 
-   #endif
-
-
     // change pixel on the matrix directly - thereby not changing the draw grid (to avoid ghost/shadow writing)
     if (led_grid[x][y]==1)
       matrix.drawPixel(x, y, LED_OFF); 
@@ -212,30 +195,11 @@ void joystickBlink(int jx, int jy)
 }
 
 
-void joystickDraw(int jx, int jy, int val) 
+void joystickDraw(int x, int y, int val) 
 {
   
- 
-  // map joystick to draw
-  int x=0; 
-   int y=0; 
-  //Serial.println("in");
-   x = map (jx, MIN_JX, MAX_JX, 0,  MAX_MX-1);
-   y = map (jy, MIN_JY, MAX_JY, 0 , MAX_MY-1);
-  
-   #ifdef DEBUG
-   Serial.print(x); Serial.print(" "); Serial.print (y); Serial.println(); 
-   #endif
 
    led_grid[x][y]=val; 
-   /*
-   // reverse value at grid 
-    if (led_grid[x][y]==0)
-      led_grid[x][y]=1;
-    else  
-      led_grid[x][y]=0; 
-    */ 
-
    writeGrid(); 
 
 
