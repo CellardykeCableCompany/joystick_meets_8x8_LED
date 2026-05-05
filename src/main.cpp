@@ -1,20 +1,19 @@
 /*
 jon rogers
-26.04.2026
+05.05.2026
 
-BASICS OF INTERACTIONS - the joystick.
-In this tutorial you will learn how to read a two axis voltage divider joystick and calibrate it 
-for use in arduino development. 
+BASICS OF INTERACTIONS - the joystick drawing machine
+In this tutorial you will learn how to read a two axis voltage divider joystick to control an 8x8 LED matrix
 
-
-	voltage-divider  two-axis joystick - basics
-  calibrate to find limits then use as you like
+Preparation - make sure you've callibrated your joystick (values needed for MAX_JX and MAX_JY)
 
 Using Arduino Nano BLE Sense 33
 https://docs.arduino.cc/resources/pinouts/ABX00031-full-pinout.pdf?_gl=1*1rdm73z*_up*MQ..*_ga*MTgzMzUwOTczLjE3Nzc0NjEyMjI.*_ga_NEXN8H46L5*czE3Nzc0NjEyMjAkbzEkZzAkdDE3Nzc0NjEyMjAkajYwJGwwJGg5Mjg2MDU1MDE.
 
+Adafruit's 8x8 1.2" matrix
+https://www.adafruit.com/product/1049
 
-  Using this joystick from Pi Hut (part no 105757)]
+Using this joystick from Pi Hut (part no 105757)]
   Data sheet https://cdn-shop.adafruit.com/product-files/5628/P5628_C17894-001-A+datasheet.png
 
   Pins (from top)
