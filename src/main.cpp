@@ -46,7 +46,7 @@ https://docs.arduino.cc/resources/pinouts/ABX00031-full-pinout.pdf?_gl=1*1rdm73z
 #include "Adafruit_LEDBackpack.h"
 
 //#define CALIB
-#define DEBUG
+//#define DEBUG
 
 #define MIN_JX 340 // calibrated joystick values
 #define MAX_JX 1023
@@ -63,6 +63,10 @@ int vertical = 512;  // variable to store the value read
 int horizontal = 512; 
 int switch1= 0; 
 
+bool is_blink=false; 
+int tx=512;  /// temp position values for joystick position
+int ty=512; 
+
 // initiate joysick values as mid (512) min_x, max_x, min_y, max_y
 int joystickLimits[4] = {512, 512, 512, 512};
 
@@ -77,16 +81,24 @@ void writeGrid ();
 Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
 int led_grid[MAX_MX][MAX_MY] = {0}; // initialise grid with zero ( 0 = off; 1 = on) 
 
+
+/*  timer functionality*/
+const unsigned long blinkInterval = 500; // set blink in milliseconds 
+unsigned long previousTime = 0;
+
 void setup() {
   Serial.begin(9600);           //  setup serial
   pinMode(S1, INPUT_PULLUP); 
 
   matrix.begin(0x70);  // pass in the address 0x70 for led backpack... 
+  
+  
 }
 
 void loop() {
  
-
+unsigned long currentTime = millis();
+  
 #ifdef CALIB
  calibrate(joystickLimits);
  Serial.print(joystickLimits[2]); Serial.print("    "); Serial.print(joystickLimits[3]);
@@ -112,9 +124,20 @@ void loop() {
 
  // followJoystick(joyX, joyY);
   joystickDraw(joyX, joyY, v);
-  matrix.writeDisplay();
+  // add blink state through timer
   
-  
+  if (currentTime - previousTime >= blinkInterval) {
+    // blink it off where it was previously on
+    Serial.println(is_blink);
+    
+     previousTime = currentTime;
+    is_blink=!is_blink; 
+  }
+ 
+   if (is_blink){
+    joystickBlink(joyX, joyY);
+    }
+   matrix.writeDisplay();
  #endif
 
 }
@@ -157,8 +180,8 @@ Serial.println();
 
   // draw 
   
-  matrix.clear();
   matrix.drawPixel(x, y, LED_ON);
+  matrix.clear();
   matrix.writeDisplay();
   
 
@@ -166,11 +189,11 @@ Serial.println();
 
 void joystickBlink(int jx, int jy) 
 {
-  int s; // switch
+  //int s; // switch
  
   // map joystick to draw
   int x=0; 
-   int y=0; 
+  int y=0; 
   //Serial.println("in");
    x = map (jx, MIN_JX, MAX_JX, 0,  MAX_MX-1);
    y = map (jy, MIN_JY, MAX_JY, 0 , MAX_MY-1);
@@ -179,13 +202,13 @@ void joystickBlink(int jx, int jy)
    Serial.print(x); Serial.print(" "); Serial.print (y); Serial.println(); 
    #endif
 
-   // fill grid
-   
+
+    // change pixel on the matrix directly - thereby not changing the draw grid (to avoid ghost/shadow writing)
     if (led_grid[x][y]==1)
-      led_grid[x][y]=0;  
+      matrix.drawPixel(x, y, LED_OFF); 
     else  
-    led_grid[x][y=0]==1; 
-   writeGrid(); 
+     matrix.drawPixel(x, y, LED_ON);
+
 }
 
 
@@ -222,10 +245,8 @@ void writeGrid ()
 {
  // write contents of the grid to the LED matrix
 
-  matrix.clear();
+ // matrix.clear();
   
-  
-
   for (int y=0; y<MAX_MY; y++){
     for (int x=0; x<MAX_MX; x++){
       if (led_grid[x][y]==1)
@@ -234,7 +255,5 @@ void writeGrid ()
        matrix.drawPixel(x, y, LED_OFF);  
 	}
   }
-  //matrix.writePixel(7,0, LED_ON);
-
-
+  
 }
