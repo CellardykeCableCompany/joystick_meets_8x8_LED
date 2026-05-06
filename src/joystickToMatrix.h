@@ -16,6 +16,8 @@
 #define MAX_MY 8
 #define JOY_MODE 1 // way the joystick changes x, y values 
 #define JOY_THRESH 100 // threhold joystick has to move before increment happens (buffer zone in middle)
+#define BLINK_ON_TIME 200 // using this as an equal blink on/off time is visually disturbing
+#define BLINK_OFF_TIME 1
 
 class joystickToMatrix {
   public:

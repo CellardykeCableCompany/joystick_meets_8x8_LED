@@ -7,7 +7,6 @@ ADC1 = A0;
 ADC2 = A1; 
 S1 = A2; 
 
-
 vertical  = 512;  // variable to store the value read
 horizontal  = 512; 
 switch1 = 0;  
@@ -26,8 +25,7 @@ void joystickToMatrix::setup()
   Serial.println("all set up");
   midPointJoyX = ((MAX_JX - MIN_JX)/2)+ MIN_JX + OFF_JX; 
   midPointJoyY = ((MAX_JY - MIN_JY)/2) +MIN_JY + OFF_JY; 
-  blinkInterval = joyInterval / 2; // just doing this so you can see the cursor blink at least once when you move
-
+ 
 mX=4; 
 mY=4; 
 }
@@ -49,17 +47,8 @@ void joystickToMatrix::update()
    
     read(mX, mY, JOY_MODE); // 
     draw(mX, mY,  v);
-    // add blink state through timer
-  
-    if (currentTimeBlink - previousTimeBlink >= blinkInterval) {
-        // blink it off where it was previously on
-        //Serial.println(is_blink);
-        previousTimeBlink = currentTimeBlink;
-        is_blink=!is_blink; 
-  }
+    blink(mX, mY); 
  
-   if (is_blink)
-        blink(mX, mY);
 
 //  Serial.print(mX); Serial.print ("  "); Serial.print(mY); Serial.print("  "); Serial.print (switch1); Serial.println(); 
     
@@ -190,12 +179,29 @@ void joystickToMatrix::draw(int x , int y, int v)
 
 void joystickToMatrix::blink(int x , int y)
 {
+  // blink the cursor to show where it is on the grid 
 
-    // change pixel on the matrix directly - thereby not changing the draw grid (to avoid ghost/shadow writing)
-    if (led_grid[x][y]==1)
-      matrix.drawPixel(x, y, LED_OFF); 
-    else  
-     matrix.drawPixel(x, y, LED_ON);
+    currentTimeBlink = millis(); 
+    if(is_blink)
+      blinkInterval = BLINK_ON_TIME; 
+    else
+      blinkInterval = BLINK_OFF_TIME; 
+  
+    if (currentTimeBlink - previousTimeBlink >= blinkInterval) {
+        // blink it off where it was previously on
+        //Serial.println(is_blink);
+        previousTimeBlink = currentTimeBlink;
+        is_blink=!is_blink; 
+  }
+ 
+  if (is_blink)
+    {
+      // change pixel on the matrix directly - thereby not changing the draw grid (to avoid ghost/shadow writing)
+       if (led_grid[x][y]==1)
+        matrix.drawPixel(x, y, LED_OFF); 
+      else  
+        matrix.drawPixel(x, y, LED_ON);
+    }
 
 
 }
